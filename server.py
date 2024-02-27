@@ -1,17 +1,36 @@
 import socket
 import threading
 
-DISCONNECT_PROTOCOL = "!DISCONNECT"
+DISCONNECT_PROTOCOL = "/disconnect"
 CONNECTIONPORT = 12000
 CLIENTPORT = 13000
+lock = threading.Lock()
+usernames=[]
+userports=[]
 
 def capitalize_message(message):
     return message.upper()
+
+def increment_port():
+    global CLIENTPORT
+    with lock:
+        CLIENTPORT += 1
 
 def handle_client(connectionSocket,addr):
     print(f"[NEW CONNECTION] {addr} connected")
     print(f"[ACTIVE CONNECTIONS] {threading.activeCount()-1}")
     connected = True
+    
+    clientName = connectionSocket.recv(1024).decode()
+    increment_port()
+    portString = str(CLIENTPORT)
+    portNumber = CLIENTPORT
+    connectionSocket.send((portString) .encode())
+    print(clientName, 'is now connected on',portNumber)       #Write the port to the array
+    
+    usernames.append(clientName)
+    userports.append(CLIENTPORT)
+    
     while connected:
         # Receive message from client
         message = connectionSocket.recv(1024).decode()
@@ -19,15 +38,37 @@ def handle_client(connectionSocket,addr):
             print("Received message from client:", message)
             if message == DISCONNECT_PROTOCOL:
                 connected = False
-        # Capitalize the message
-        capitalized_message = capitalize_message(message)
+            if message == 'list':
+                availableClients = ','.join(str(x) for x in usernames)
+    #Send a list the available clients
+                connectionSocket.send(availableClients.encode())
+                wantedClientName = connectionSocket.recv(1024).decode()
+                for i in range (len(usernames)):
+                    if usernames[i] == wantedClientName:
+                        connection_request(i,portNumber,clientName) 
+            else:
+                connectionSocket.send('Please send a valid function'.encode())
+                
 
-        # UDP socket for sending the capitalized message
-        udp_server_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        udp_server_socket.sendto(capitalized_message.encode(), ('localhost', 13000))
     print(f"[ACTIVE CONNECTIONS] {threading.activeCount()-2}")
     connectionSocket.close()
-    udp_server_socket.close()
+
+def connection_request(i,client1Port,client1Name):  #i has client 2 info
+        udpForRequestsPort = userports[i]+100
+        udp_server_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        udp_server_socket.bind(('localhost',12001))  #New port for connection requests
+        message='[SERVER NOTICE] ' + client1Name + " wants to chat! Type /accept to go to their chat./n"
+        udp_server_socket.sendto(message.encode(),('localhost',udpForRequestsPort))
+        request_message, address = udp_server_socket.recvfrom(1024).decode()
+                
+        if request_message:
+            if(request_message == '/accept'):
+                request_message = client1Name + "," + client1Port + "," + usernames[i] + "," + userports[i]
+                print(request_message) 
+            else:
+                request_message = ''    #Some kind of protocol that resets the interaction because the request was rejected
+            udp_server_socket.sendto(request_message.encode(),(request_message,udpForRequestsPort))
+                #Send the connection string with details: 
 
 def startServer():
     # TCP socket for initial connection
