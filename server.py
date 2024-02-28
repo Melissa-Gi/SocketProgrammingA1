@@ -51,7 +51,9 @@ def handle_client(connectionSocket,addr):
                         connection_request(i,portNumber,clientName) 
             else:
                 connectionSocket.send('Please send a valid function'.encode())
-    print(clientName,'has disconnected')            
+    print(clientName,'has disconnected')
+    usernames.remove(clientName)  
+    available.remove(clientName)    
     print(f"[ACTIVE CONNECTIONS] {threading.activeCount()-2}")
     connectionSocket.close()
 
