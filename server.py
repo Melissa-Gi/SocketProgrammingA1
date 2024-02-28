@@ -6,6 +6,7 @@ CONNECTIONPORT = 12000
 CLIENTPORT = 13000
 lock = threading.Lock()
 usernames=[]
+available=[]
 userports=[]
 
 def increment_port():
@@ -26,6 +27,7 @@ def handle_client(connectionSocket,addr):
     print(clientName, 'is now available on',portNumber)       #Write the port to the array
     
     usernames.append(clientName)
+    available.append(clientName)
     userports.append(CLIENTPORT)
     
     while connected:
@@ -35,8 +37,10 @@ def handle_client(connectionSocket,addr):
             print("Received message from client:", message)
             if message == DISCONNECT_PROTOCOL:
                 connected = False
+            if 'ADD' in message:
+                available.append(message.split(',')[1])
             if message == 'list':
-                availableClients = ','.join(str(x) for x in usernames)
+                availableClients = ','.join(str(x) for x in available)
     #Send a list the available clients
                 connectionSocket.send(availableClients.encode())
                 wantedClientName = connectionSocket.recv(1024).decode()
@@ -60,6 +64,10 @@ def connection_request(i,client1Port,client1Name):  #i has client 2 info
             request_message, address = udp_server_socket.recvfrom(1024)   
             if request_message:
                 if(request_message.decode('utf-8') == '/accept'):
+                    #Remove engaged clients from the available array
+                    available.remove(client1Name)
+                    available.remove(usernames[i])
+                    #Send connection string
                     request_message = str(client1Name) + "," + str(client1Port) + "," + str(usernames[i]) + "," + str(userports[i])
                     request_message_other = str(usernames[i]) + "," + str(userports[i])  + "," +str(client1Name) + "," + str(client1Port)
                     udp_server_socket.sendto(request_message_other.encode(),('localhost',udpForRequestsPort))
