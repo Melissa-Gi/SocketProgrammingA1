@@ -76,9 +76,11 @@ def startServer():
     print(f"[LISTENING] Server is listening with TCP on {CONNECTIONPORT}")
     while True:
     # Accept TCP connection
+        if input() == DISCONNECT_PROTOCOL:
+            print('Killing Server')
+            break        
         tcp_client_socket, addr = tcp_server_socket.accept()
-        thread = threading.Thread(target=handle_client, args=(tcp_client_socket,addr))
-        thread.start()
-        # -1 to exclude server thread
+        new_client = threading.Thread(target=handle_client, args=(tcp_client_socket,addr))
+        new_client.start()
         
 startServer()
