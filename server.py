@@ -37,11 +37,13 @@ def handle_client(connectionSocket,addr):
             print("Received message from client:", message)
             if message == DISCONNECT_PROTOCOL:
                 connected = False
-            if 'ADD' in message:
-                available.append(message.split(',')[1])
-            if message == 'list':
+            elif 'ADD' in message:
+                new_status=message.split(',')
+                available.append(new_status[1])
+                print('[AVAILABLE]',new_status[1],'is free to chat!')
+            elif message == 'list':
                 availableClients = ','.join(str(x) for x in available)
-    #Send a list the available clients
+                #Send a list the available clients
                 connectionSocket.send(availableClients.encode())
                 wantedClientName = connectionSocket.recv(1024).decode()
                 for i in range (len(usernames)):
@@ -49,7 +51,7 @@ def handle_client(connectionSocket,addr):
                         connection_request(i,portNumber,clientName) 
             else:
                 connectionSocket.send('Please send a valid function'.encode())
-                
+    print(clientName,'has disconnected')            
     print(f"[ACTIVE CONNECTIONS] {threading.activeCount()-2}")
     connectionSocket.close()
 
@@ -67,6 +69,7 @@ def connection_request(i,client1Port,client1Name):  #i has client 2 info
                     #Remove engaged clients from the available array
                     available.remove(client1Name)
                     available.remove(usernames[i])
+                    print('[BUSY]',client1Name,'and',usernames[i],'are chatting')
                     #Send connection string
                     request_message = str(client1Name) + "," + str(client1Port) + "," + str(usernames[i]) + "," + str(userports[i])
                     request_message_other = str(usernames[i]) + "," + str(userports[i])  + "," +str(client1Name) + "," + str(client1Port)
@@ -83,10 +86,7 @@ def startServer():
     tcp_server_socket.listen(1)
     print(f"[LISTENING] Server is listening with TCP on {CONNECTIONPORT}")
     while True:
-    # Accept TCP connection
-        #if input() == DISCONNECT_PROTOCOL:
-           # print('Killing Server')
-            #break        
+        # Accept TCP connection    
         tcp_client_socket, addr = tcp_server_socket.accept()
         new_client = threading.Thread(target=handle_client, args=(tcp_client_socket,addr))
         new_client.start()
