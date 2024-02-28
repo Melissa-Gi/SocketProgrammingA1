@@ -8,9 +8,6 @@ lock = threading.Lock()
 usernames=[]
 userports=[]
 
-def capitalize_message(message):
-    return message.upper()
-
 def increment_port():
     global CLIENTPORT
     with lock:
@@ -26,7 +23,7 @@ def handle_client(connectionSocket,addr):
     portString = str(CLIENTPORT)
     portNumber = CLIENTPORT
     connectionSocket.send((portString) .encode())
-    print(clientName, 'is now connected on',portNumber)       #Write the port to the array
+    print(clientName, 'is now available on',portNumber)       #Write the port to the array
     
     usernames.append(clientName)
     userports.append(CLIENTPORT)
@@ -49,7 +46,6 @@ def handle_client(connectionSocket,addr):
             else:
                 connectionSocket.send('Please send a valid function'.encode())
                 
-
     print(f"[ACTIVE CONNECTIONS] {threading.activeCount()-2}")
     connectionSocket.close()
 
@@ -59,16 +55,18 @@ def connection_request(i,client1Port,client1Name):  #i has client 2 info
         udp_server_socket.bind(('localhost',12001))  #New port for connection requests
         message='[SERVER NOTICE] ' + client1Name + " wants to chat! Type /accept to go to their chat./n"
         udp_server_socket.sendto(message.encode(),('localhost',udpForRequestsPort))
-        request_message, address = udp_server_socket.recvfrom(1024).decode()
-                
-        if request_message:
-            if(request_message == '/accept'):
-                request_message = client1Name + "," + client1Port + "," + usernames[i] + "," + userports[i]
-                print(request_message) 
-            else:
-                request_message = ''    #Some kind of protocol that resets the interaction because the request was rejected
-            udp_server_socket.sendto(request_message.encode(),(request_message,udpForRequestsPort))
-                #Send the connection string with details: 
+        
+        while True:
+            request_message, address = udp_server_socket.recvfrom(1024)   
+            if request_message:
+                if(request_message.decode('utf-8') == '/accept'):
+                    request_message = str(client1Name) + "," + str(client1Port) + "," + str(usernames[i]) + "," + str(userports[i])
+                    request_message_other = str(usernames[i]) + "," + str(userports[i])  + "," +str(client1Name) + "," + str(client1Port)
+                    udp_server_socket.sendto(request_message_other.encode(),('localhost',udpForRequestsPort))
+                    udp_server_socket.sendto(request_message.encode(),('localhost',client1Port+100))
+                    break
+                else:
+                    request_message = ''    #Some kind of protocol that resets the interaction because the request was rejected
 
 def startServer():
     # TCP socket for initial connection
