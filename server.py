@@ -53,7 +53,7 @@ def connection_request(i,client1Port,client1Name):  #i has client 2 info
         udpForRequestsPort = userports[i]+100
         udp_server_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         udp_server_socket.bind(('localhost',12001))  #New port for connection requests
-        message='[SERVER NOTICE] ' + client1Name + " wants to chat! Type /accept to go to their chat./n"
+        message='[SERVER NOTICE] ' + client1Name + " wants to chat! Type /accept to go to their chat.\n"
         udp_server_socket.sendto(message.encode(),('localhost',udpForRequestsPort))
         
         while True:
@@ -76,9 +76,9 @@ def startServer():
     print(f"[LISTENING] Server is listening with TCP on {CONNECTIONPORT}")
     while True:
     # Accept TCP connection
-        if input() == DISCONNECT_PROTOCOL:
-            print('Killing Server')
-            break        
+        #if input() == DISCONNECT_PROTOCOL:
+           # print('Killing Server')
+            #break        
         tcp_client_socket, addr = tcp_server_socket.accept()
         new_client = threading.Thread(target=handle_client, args=(tcp_client_socket,addr))
         new_client.start()
