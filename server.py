@@ -38,9 +38,11 @@ def handle_client(connectionSocket,addr):
             if message == DISCONNECT_PROTOCOL:
                 connected = False
             elif 'ADD' in message:
-                new_status=message.split(',')
-                available.append(new_status[1])
-                print('[AVAILABLE]',new_status[1],'is free to chat!')
+                while True:
+                    new_status=message.split(',')
+                    available.append(new_status[1])
+                    print('[AVAILABLE]',new_status[1],'is free to chat!')
+                    break
             elif message == 'list':
                 while True:
                     availableClients = ','.join(str(x) for x in available)
@@ -57,8 +59,10 @@ def handle_client(connectionSocket,addr):
             else:
                 connectionSocket.send('Please send a valid function'.encode())
     print(clientName,'has disconnected')
-    usernames.remove(clientName)  
-    available.remove(clientName)    
+    usernames.remove(clientName)
+    for user in available:
+        if user == clientName:
+            available.remove(clientName)    
     print(f"[ACTIVE CONNECTIONS] {threading.activeCount()-2}")
     connectionSocket.close()
 
