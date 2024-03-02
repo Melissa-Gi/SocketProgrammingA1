@@ -42,13 +42,18 @@ def handle_client(connectionSocket,addr):
                 available.append(new_status[1])
                 print('[AVAILABLE]',new_status[1],'is free to chat!')
             elif message == 'list':
-                availableClients = ','.join(str(x) for x in available)
-                #Send a list the available clients
-                connectionSocket.send(availableClients.encode())
-                wantedClientName = connectionSocket.recv(1024).decode()
-                for i in range (len(usernames)):
-                    if usernames[i] == wantedClientName:
-                        connection_request(i,portNumber,clientName) 
+                while True:
+                    availableClients = ','.join(str(x) for x in available)
+                    #Send a list the available clients
+                    connectionSocket.send(availableClients.encode())
+                    choice = connectionSocket.recv(1024).decode()
+                    if (choice == 'CONNECT'):
+                        wantedClientName = connectionSocket.recv(1024).decode()
+                        for i in range (len(usernames)):
+                            if usernames[i] == wantedClientName:
+                                connection_request(i,portNumber,clientName) 
+                    else:
+                        break
             else:
                 connectionSocket.send('Please send a valid function'.encode())
     print(clientName,'has disconnected')
